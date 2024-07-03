@@ -1,6 +1,8 @@
 name: Analyze with CodeGuru Reviewer
 
-on: [push, workflow_dispatch]
+on: 
+ - push
+ - workflow_dispatch # This allows manual triggering of the action through the GitHub UI.
 
 permissions:
     id-token: write
@@ -13,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Configure AWS credentials
+      id: iam-role
       continue-on-error: true
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -30,7 +33,7 @@ jobs:
         java-version: 1.8
     - name: Build project
       if: steps.iam-role.outcome == 'success'
-      run: mvn compile -DskipTests
+      run: ./gradlew assemble
 
     - name: CodeGuru Reviewer
       uses: aws-actions/codeguru-reviewer@v1.1
@@ -38,7 +41,7 @@ jobs:
       continue-on-error: false
       with:          
         s3_bucket: codeguru-reviewer-github-profiler-demo-048169001733-uw2
-        build_path: ./target/classes
+        build_path: ./build/classes/java/main
 
     - name: Store SARIF file
       if: steps.iam-role.outcome == 'success'
